@@ -3,35 +3,22 @@ import React from "react";
 import ChartistGraph from "react-chartist";
 // @material-ui/core
 import withStyles from "@material-ui/core/styles/withStyles";
-import Icon from "@material-ui/core/Icon";
 // @material-ui/icons
-import Store from "@material-ui/icons/Store";
-import Warning from "@material-ui/icons/Warning";
-import DateRange from "@material-ui/icons/DateRange";
+
 import LocalOffer from "@material-ui/icons/LocalOffer";
 import Update from "@material-ui/icons/Update";
 import ArrowUpward from "@material-ui/icons/ArrowUpward";
 import AccessTime from "@material-ui/icons/AccessTime";
 import Accessibility from "@material-ui/icons/Accessibility";
-import BugReport from "@material-ui/icons/BugReport";
-import Code from "@material-ui/icons/Code";
-import Cloud from "@material-ui/icons/Cloud";
-import CheckIcon from '@material-ui/icons/Check';
 // core components
 import GridItem from "../../components/Grid/GridItem";
 import GridContainer from "../../components/Grid/GridContainer";
 import Table from "../../components/Table/Table";
-import Tasks from "../../components/Tasks/Tasks";
-import CustomTabs from "../../components/CustomTabs/CustomTabs";
-import Danger from "../../components/Typography/Danger";
 import Card from "../../components/Card/Card";
-import Button from '../../components/CustomButtons/Button';
 import CardHeader from "../../components/Card/CardHeader";
 import CardIcon from "../../components/Card/CardIcon";
 import CardBody from "../../components/Card/CardBody";
 import CardFooter from "../../components/Card/CardFooter";
-
-import { bugs, website, server } from "../../variables/general";
 
 import {
   dailySalesChart,
@@ -40,14 +27,57 @@ import {
 } from "../../variables/charts";
 
 import dashboardStyle from "../../assets/jss/material-dashboard-react/views/dashboardStyle";
-import CustomInput from "../../components/CustomInput/CustomInput";
-import Success from "../../components/Typography/Success";
+import api from "../../services/api";
+
+type apiResponse = {
+  coord: {
+    lon: number,
+    lat: number
+  },
+  weather: Array<{
+    id: number;
+    main: string;
+    description: string;
+    icon: string;
+  }>,
+  base: string,
+  main: {
+    temp: string,
+    feels_like: number,
+    temp_min: number,
+    temp_max: number,
+    pressure: number,
+    humidity: number
+  },
+  visibility: number,
+  wind: {
+    speed: number,
+    deg: number
+  },
+  clouds: {
+    all: number
+  },
+  dt: number,
+  sys: {
+    type: number,
+    id: number,
+    message: number,
+    country: string,
+    sunrise: number,
+    sunset: number
+  },
+  timezone: number,
+  id: number,
+  name: string,
+  cod: number
+}
 
 interface Props {
   classes: any;
 }
 
 interface State {
+  data?: apiResponse;
   value: number;
   creatingMessage: boolean;
   messageSuccess: boolean;
@@ -66,90 +96,109 @@ class Dashboard extends React.Component<Props, State> {
     this.handleChange = this.handleChange.bind(this);
     this.handleChangeIndex = this.handleChangeIndex.bind(this);
   }
+
+  async componentDidMount() {
+    let key: string = 'weather?appid=61434153740b83810657224b0bb29657';
+    const response = await api.get(`${key}&q=juiz+de+fora&lang=pt&units=metric&mode=JSON`);
+    //const dailysResponse = await api.get(`${key}&q=juiz+de+fora&lang=pt&units=metric&mode=JSON`);
+    const data: apiResponse = await response.data;
+    this.setState({ data: data })
+  };
   handleChange = (event: any, value: number) => {
     this.setState({ value });
   };
 
+  hadleUTCTime = (timeXML: any) => {
+    let sec: number = timeXML;
+    let date: Date = new Date(sec * 1000);
+    return date;
+  }
   handleChangeIndex = (index: number) => {
     this.setState({ value: index });
   };
+  handleUrlIconTemp = () => {
+    let url: string;
+    let iconId = this.state.data?.weather.map(item => item.icon);
+    url = `http://openweathermap.org/img/wn/${iconId}@2x.png`;
+    return url;
+
+  }
 
   render() {
     const { classes } = this.props;
-    const { creatingMessage, messageFailed, messageSuccess } = this.state;
     return (
       <div>
         <GridContainer>
-          <GridItem xs={12} sm={6} md={3}>
+          <GridItem xs={12} sm={12} md={12}>
             <Card>
-              <CardHeader color="success" stats={true} icon={true}>
-                <CardIcon color="success">
-                  <Store />
+              <CardHeader stats={true} icon={true}>
+                <CardIcon color="info">
+                  <img src='https://upload.wikimedia.org/wikipedia/commons/c/cc/Brasao-jf.png' alt="Brasão Juiz de Fora" width="50" height="50" />
+
                 </CardIcon>
-                <p className={classes.cardCategory}>Revenue</p>
-                <h3 className={classes.cardTitle}>$34,245</h3>
+                <h1 className={classes.cardTitle}>{this.state.data?.name}</h1>
               </CardHeader>
-              <CardFooter stats={true}>
-                <div className={classes.stats}>
-                  <DateRange />
-                  Last 24 Hours
-                </div>
+              <CardFooter>
+                <p>{this.hadleUTCTime(this.state.data?.dt).toLocaleString()}</p>
               </CardFooter>
             </Card>
+
           </GridItem>
-          <GridItem xs={12} sm={6} md={3}>
+          <GridItem xs={3} sm={6} >
+            <Card>
+              <CardHeader color="info" stats={true} icon={true}>
+                <CardIcon color="info">
+                  <img src='https://www.flaticon.com/svg/static/icons/svg/941/941818.svg' alt="Nascer do Sol" width="50" height="50" />
+
+                </CardIcon>
+                <p className={classes.cardCategory}>Nascer do Sol</p>
+                <h3 className={classes.cardTitle}>{this.hadleUTCTime(this.state.data?.sys.sunrise).toLocaleTimeString()}</h3>
+              </CardHeader>
+            </Card>
+          </GridItem>
+          <GridItem xs={3} sm={6} >
             <Card>
               <CardHeader color="warning" stats={true} icon={true}>
                 <CardIcon color="warning">
-                  <Icon>content_copy</Icon>
+                  <img src='https://www.flaticon.com/svg/static/icons/svg/1542/1542641.svg' alt="Por do Sol" width="50" height="50" />
                 </CardIcon>
-                <p className={classes.cardCategory}>Used Space</p>
+                <p className={classes.cardCategory}>Por do Sol</p>
                 <h3 className={classes.cardTitle}>
-                  49/50 <small>GB</small>
+                  {this.hadleUTCTime(this.state.data?.sys.sunset).toLocaleTimeString()}
                 </h3>
               </CardHeader>
-              <CardFooter stats={true}>
-                <div className={classes.stats}>
-                  <Danger>
-                    <Warning />
-                  </Danger>
-                  <a href="#pablo" onClick={(e) => e.preventDefault()}>
-                    Get more space
-                  </a>
-                </div>
-              </CardFooter>
             </Card>
           </GridItem>
-          <GridItem xs={12} sm={6} md={3}>
+          <GridItem xs={3} sm={6} >
             <Card>
               <CardHeader color="danger" stats={true} icon={true}>
                 <CardIcon color="danger">
-                  <Icon>info_outline</Icon>
+                  <img src={this.handleUrlIconTemp()} alt="Por do Sol" width="50" height="50" />
                 </CardIcon>
-                <p className={classes.cardCategory}>Fixed Issues</p>
-                <h3 className={classes.cardTitle}>75</h3>
+                <p className={classes.cardCategory}>Tempo</p>
+                <h3 className={classes.cardTitle}>{this.state.data?.main.temp}ºC</h3>
               </CardHeader>
               <CardFooter stats={true}>
                 <div className={classes.stats}>
                   <LocalOffer />
-                  Tracked from Github
+                  {this.state.data?.weather.map(item => item.description)}
                 </div>
               </CardFooter>
             </Card>
           </GridItem>
-          <GridItem xs={12} sm={6} md={3}>
+          <GridItem xs={3} sm={6} >
             <Card>
               <CardHeader color="info" stats={true} icon={true}>
                 <CardIcon color="info">
                   <Accessibility />
                 </CardIcon>
-                <p className={classes.cardCategory}>Followers</p>
-                <h3 className={classes.cardTitle}>+245</h3>
+                <p className={classes.cardCategory}>Sensação Térmica</p>
+                <h3 className={classes.cardTitle}>{this.state.data?.main.feels_like}ºC</h3>
               </CardHeader>
               <CardFooter stats={true}>
                 <div className={classes.stats}>
                   <Update />
-                  Just Updated
+                  Humidade Relativa do ar: {this.state.data?.main.humidity}%
                 </div>
               </CardFooter>
             </Card>
@@ -166,7 +215,7 @@ class Dashboard extends React.Component<Props, State> {
                 />
               </CardHeader>
               <CardBody>
-                <h4 className={classes.cardTitle}>Daily Sales</h4>
+                <h4 className={classes.cardTitle}>Daily Sales{console.log("olha", this.hadleUTCTime(1601906400))}</h4>
                 <p className={classes.cardCategory}>
                   <span className={classes.successText}>
                     <ArrowUpward className={classes.upArrowCardCategory} /> 55%
@@ -227,48 +276,7 @@ class Dashboard extends React.Component<Props, State> {
           </GridItem>
         </GridContainer>
         <GridContainer>
-          <GridItem xs={12} sm={12} md={6}>
-            <CustomTabs
-              title="Tasks:"
-              headerColor="primary"
-              tabs={[
-                {
-                  tabName: "Bugs",
-                  tabIcon: BugReport,
-                  tabContent: (
-                    <Tasks
-                      checkedIndexes={[0, 3]}
-                      tasksIndexes={[0, 1, 2, 3]}
-                      tasks={bugs}
-                    />
-                  ),
-                },
-                {
-                  tabName: "Website",
-                  tabIcon: Code,
-                  tabContent: (
-                    <Tasks
-                      checkedIndexes={[0]}
-                      tasksIndexes={[0, 1]}
-                      tasks={website}
-                    />
-                  ),
-                },
-                {
-                  tabName: "Server",
-                  tabIcon: Cloud,
-                  tabContent: (
-                    <Tasks
-                      checkedIndexes={[1]}
-                      tasksIndexes={[0, 1, 2]}
-                      tasks={server}
-                    />
-                  ),
-                },
-              ]}
-            />
-          </GridItem>
-          <GridItem xs={12} sm={12} md={6}>
+          <GridItem xs={12} sm={12}>
             <Card>
               <CardHeader color="warning">
                 <h4 className={classes.cardTitleWhite}>Employees Stats</h4>
@@ -291,95 +299,7 @@ class Dashboard extends React.Component<Props, State> {
             </Card>
           </GridItem>
         </GridContainer>
-        <GridContainer>
-          <GridItem xs={12}>
-          <Card>
-              <CardHeader color="success">
-                <div className={classes.messages}>
-                  <h4 className={classes.cardTitleWhite}>Mensagens Positivas</h4>
-                  {!creatingMessage && (
-                    <Button 
-                      color="transparent" 
-                      variant="outlined" 
-                      onClick={() => this.setState({ creatingMessage: true })}
-                    >
-                      Enviar Mensagem
-                    </Button>
-                  )}
-                </div>
-              </CardHeader>
-              <CardBody>
-                {!creatingMessage 
-                  ? <React.Fragment>
-                      <h5 className={classes.cardTitle}>
-                        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Cras ac est pulvinar, tempor turpis id, 
-                        vehicula magna.
-                      </h5>
-                      <p className={classes.cardCategory}>
-                        Jane Doe
-                      </p>
-                    </React.Fragment> 
-                  : <React.Fragment>
-                      <GridContainer>
-                        <GridItem xs={12}>
-                          <CustomInput
-                            labelText="Nome"
-                            id="name"
-                            color="success"
-                            formControlProps={{
-                              fullWidth: true
-                            }}
-                          />
-                        </GridItem>
-                      </GridContainer>
-                      <GridContainer>
-                        <GridItem xs={12}>
-                        <CustomInput
-                          labelText="Mensagem"
-                          id="message"
-                          formControlProps={{
-                            fullWidth: true
-                          }}
-                          inputProps={{
-                            multiline: true,
-                            rows: 5
-                          }}
-                        />
-                        </GridItem>
-                      </GridContainer>
-                    </React.Fragment>
-                }
-              </CardBody>
-              {creatingMessage && (
-                <CardFooter>
-                  <Button color="danger" onClick={() => this.setState({ creatingMessage: false })} >Cancelar</Button>
-                  <Button color="success">Enviar Mensagem</Button>
-                </CardFooter>
-              )}
-              {messageFailed && (
-                <CardFooter>
-                  <div className={classes.stats}>
-                    <Danger>
-                      <Warning />
-                      Falha ao enviar mensagem
-                    </Danger>
-                  </div>
-                </CardFooter>
-              )}
-              {messageSuccess && (
-                <CardFooter>
-                  <div className={classes.stats}>
-                    <Success>
-                      <CheckIcon />
-                      Mensagem enviada com sucesso
-                    </Success>
-                  </div>
-                </CardFooter>
-              )}
-            </Card>
-          </GridItem>
-        </GridContainer>
-      </div>
+      </div >
     );
   }
 }
